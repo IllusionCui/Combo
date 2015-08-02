@@ -72,7 +72,7 @@ bool GameLayer::onTouchBegan(Touch* touch, Event* event) {
     int index = getIndexOfCellsByPos(pos);
 //    log("GameLayer::onTouchBegan    x = %f, y = %f, index = %d", pos.x, pos.y, index);
     if (index != -1) {
-        selectCell(m_cells.at(index));
+        userSelectCell(m_cells.at(index));
     }
     
     return true;
@@ -83,7 +83,7 @@ void GameLayer::onTouchMove(Touch* touch, Event* event) {
     int index = getIndexOfCellsByPos(pos);
 //    log("GameLayer::onTouchMove    x = %f, y = %f, index = %d", pos.x, pos.y, index);
     if (index != -1) {
-        selectCell(m_cells.at(index));
+        userSelectCell(m_cells.at(index));
     }
 }
 
@@ -92,7 +92,7 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
     int index = getIndexOfCellsByPos(pos);
 //    log("GameLayer::onTouchEnd    x = %f, y = %f, index = %d", pos.x, pos.y, index);
     if (index != -1) {
-        selectCell(m_cells.at(index));
+        userSelectCell(m_cells.at(index));
     }
 
     long num = m_currSelectCells.size();
@@ -100,29 +100,14 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
         Cell * endCell = m_currSelectCells.at(num - 1);
         int endValue = endCell->getValue();
         if (endValue != 0) { // 成功连线
-            vector<Cell *> cells;
-            for (int i = 0; i < m_cells.size(); i++) {
-                Cell * cell = m_cells.at(i);
-                if (-1 == cell->getValue()) {
-                    // 将上一轮选中的障碍恢复
-                    cell->setValue(0);
-                    cells.push_back(cell);
-                } else if (CellStatus::selected == cell->getStatus()) {
-                    cell->setStatus(CellStatus::normal);
-                    if (cell == endCell) {
-                        cell->setValue(endValue*2);
-                    } else {
-                        // 将一轮选中的修改中间格子变成障碍
-                        cell->setValue(-1);
-                    }
-                } else if (0 == cell->getValue()) {
-                    cells.push_back(cell);
-                }
+            if (GameType::autoRecover == m_scene->getConfig()->type) {
+                autoRecover(endCell);
+            } else {
+                recoverByLine(endCell);
             }
             
-            // 新生成元素
-            random_shuffle(cells.begin(), cells.end());
-            cells[0]->setValue(1);
+            // 更新结束位置的值
+            endCell->setValue(endValue + 1);
             
             // 更新数据
             m_data->score += endValue;
@@ -130,9 +115,9 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
             updateUI();
         }
     }
-    
-    
     resetSelect();
+    
+    checkFailed();
 }
 
 void GameLayer::initData() {
@@ -168,7 +153,7 @@ void GameLayer::initBg() {
     float gridEndX = m_gridStartPos.x + conf->cols*m_gridSize;
     float gridEndY = m_gridStartPos.y + conf->rows*m_gridSize;
     float lineWidth = m_gridSize*conf->gridLineWidthPercent;
-    Color4F color = Color4F(50/255.0, 50/255.0, 50/255.0, 1);
+    Color4F color = Color4F(0, 0, 0.8, 1);
     // 横线
     for(int i = 0; i <= conf->rows; i++) {
         DrawNode * drawNode = DrawNode::create();
@@ -202,18 +187,23 @@ void GameLayer::initCells() {
 void GameLayer::startCells() {
     // 显示数据
     for (int i = 0; i < m_cells.size(); i++) {
-        m_cells.at(i)->setValue(rand()%2);
+        m_cells.at(i)->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
     }
 }
 
 int GameLayer::getIndexOfCellsByPos(Vec2 pos) {
+    int col = (pos.x - m_gridStartPos.x)/m_gridSize;
+    int row = (pos.y - m_gridStartPos.y)/m_gridSize;
+    
+    return getIndexByRowAndCol(row, col);
+}
+
+int GameLayer::getIndexByRowAndCol(int row, int col) {
     int res = -1;
     
     Config * conf = m_scene->getConfig();
-    int x = (pos.x - m_gridStartPos.x)/m_gridSize;
-    int y = (pos.y - m_gridStartPos.y)/m_gridSize;
-    if (x >= 0 && x < conf->cols && y >= 0 && y < conf->rows) {
-        res = y*conf->cols + x;
+    if (col >= 0 && col < conf->cols && row >= 0 && row < conf->rows) {
+        res = row*conf->cols + col;
     }
     
     return res;
@@ -262,28 +252,28 @@ void GameLayer::updateUI() {
     m_comboLabel->setString(Util::strFormat("%d", m_data->combo));
 }
 
-void GameLayer::selectCell(Cell * cell) {
+int GameLayer::selectCell(Cell * cell, Vector<Cell *> &selectCells) {
     if (NULL == cell) {
-        return;
+        return 0;
     }
-    log("GameLayer::selectCell  cell = %p, row = %d, col = %d", cell, cell->getRow(), cell->getCol());
+//    log("GameLayer::selectCell  cell = %p, row = %d, col = %d", cell, cell->getRow(), cell->getCol());
     
-    long num = m_currSelectCells.size();
+    long num = selectCells.size();
     bool add = true;
     Cell * endCell = NULL;
     if (num > 0) {
-        endCell = m_currSelectCells.at(num - 1);
-        long index = m_currSelectCells.getIndex(cell);
+        endCell = selectCells.at(num - 1);
+        long index = selectCells.getIndex(cell);
         if (index > -1) {
             if (index == num - 1) {
                 // 选择同一个元素
-                return;
+                return 0;
             } else if (index == num - 2) {
                 // 返回上一个元素删除
                 add = false;
             } else {
                 // 选择其他已选元素 无效
-                return;
+                return 0;
             }
         } // else index = -1 说明新添加元素
     }// else index = -1 说明新添加第一个元素
@@ -291,34 +281,49 @@ void GameLayer::selectCell(Cell * cell) {
     if (add) {
         // 检测是否合法
         if (0 < num) { // 后选择元素必须跟本身匹配
+            if (num > 1 && endCell->getValue() > 0) {
+                return 0;   // 已经完成选择
+            }
             if (!cell->canBeMoveTo()) {
-                return; // 不能移动到
+                return 0; // 不能移动到
             }
             int disRow = cell->getRow() - endCell->getRow();
             int disCol = cell->getCol() - endCell->getCol();
             if (!(0 == disRow && (disCol == -1 || disCol == 1)) && !(0 == disCol && (disRow == -1 || disRow == 1))) {
                 // 不是最后元素的正上下左右方
-                return;
+                return 0;
             }
             
-            int startValue = m_currSelectCells.at(0)->getValue();
+            int startValue = selectCells.at(0)->getValue();
             int selectValue = cell->getValue();
             if (selectValue != 0 && selectValue != startValue) {
-                return;
+                return 0;
             }
         } else { // 后选择元素必须跟本身匹配
             if (!cell->isSelectable()) {
-                return; // 不能选择
+                return 0; // 不能选择
             }
         }
         
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
+void GameLayer::userSelectCell(Cell * cell) {
+    int res = selectCell(cell, m_currSelectCells);
+    if (0 == res) {
+        return;
+    }
+    Cell * endCell = NULL;
+    long num = m_currSelectCells.size();
+    if (num > 0) {
+        endCell = m_currSelectCells.at(num - 1);
+    }
+    if (res > 0) {
+        // 新添连接线
         if (num > 0) {
-            if (num > 1 && endCell->getValue() != 0) {
-                // 当前已经合法不支持选择
-                return;
-            }
-            
-            // 新添连接线
             Color4F color = Color4F(120/255.0, 180/255.0, 20/255.0, 1);
             Vec2 pos1 = endCell->getPosition();
             Vec2 pos2 = cell->getPosition();
@@ -330,7 +335,7 @@ void GameLayer::selectCell(Cell * cell) {
         
         cell->setStatus(CellStatus::selected);
         m_currSelectCells.pushBack(cell);
-    } else {
+    } else if (res < 0) {
         // 取消之前选择的Cell
         endCell->setStatus(CellStatus::normal);
         m_currSelectCells.erase(m_currSelectCells.begin() + num - 1);
@@ -341,7 +346,6 @@ void GameLayer::selectCell(Cell * cell) {
             m_currSelectLines.erase(m_currSelectLines.begin() + num - 2);
         }
     }
-    log("GameLayer::selectCell  cell = %p, row = %d, col = %d, num = %ld, add = %d", cell, cell->getRow(), cell->getCol(), num, add);
 }
 
 void GameLayer::resetSelect() {
@@ -355,4 +359,147 @@ void GameLayer::resetSelect() {
         m_currSelectLines.at(i)->removeFromParent();
     }
     m_currSelectLines.clear();
+}
+
+void GameLayer::autoRecover(Cell * endCell) {
+    log("GameLayer::autoRecover");
+    vector<Cell *> cells;
+    for (int i = 0; i < m_cells.size(); i++) {
+        Cell * cell = m_cells.at(i);
+        if (-1 == cell->getValue()) {
+            // 将上一轮选中的障碍恢复
+            cell->setValue(0);
+            cells.push_back(cell);
+        } else if (CellStatus::selected == cell->getStatus()) {
+            if (cell != endCell) {
+                // 将一轮选中的修改中间格子变成障碍
+                cell->setValue(-1);
+            }
+        } else if (0 == cell->getValue()) {
+            cells.push_back(cell);
+        }
+    }
+    
+    // 新生成元素
+    random_shuffle(cells.begin(), cells.end());
+    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
+}
+
+void GameLayer::recoverByLine(Cell * endCell) {
+    log("GameLayer::recoverByLine");
+    for (int i = 0; i < m_currSelectCells.size(); i++) {
+        Cell * selectCell = m_currSelectCells.at(i);
+        for (int row = -1; row < 2; row++) {
+            for (int col = -1; col < 2; col++) {
+                if (!(0 == row && (col == -1 || col == 1)) && !(0 == col && (row == -1 || row == 1))) {
+                    // 不是最后元素的正上下左右方
+                    continue;
+                }
+
+                int index = getIndexByRowAndCol(selectCell->getRow() + row, selectCell->getCol() + col);
+                if (index >= 0) {
+                    Cell * checkCell = m_cells.at(index);
+                    if (-1 == checkCell->getValue() && checkCell->getStatus() != CellStatus::selected) {
+                        // 旁消除
+                        checkCell->setValue(0);
+                    }
+                }
+            }
+        }
+        if (selectCell != endCell) {
+            // 将一轮选中的修改中间格子变成障碍
+            selectCell->setValue(-1);
+        }
+    }
+    
+    vector<Cell *> cells;
+    for (int i = 0; i < m_cells.size(); i++) {
+        Cell * cell = m_cells.at(i);
+        if (0 == cell->getValue()) {
+            cells.push_back(cell);
+        }
+    }
+    
+    // 新生成元素
+    random_shuffle(cells.begin(), cells.end());
+    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
+}
+
+void GameLayer::checkFailed() {
+    Vector<Cell *> lineCells;
+    for (int i = 0; i < m_cells.size(); i++) {
+        Cell * cell = m_cells.at(i);
+        if (selectCell(cell, lineCells)) {
+            // 选中开始点
+            cell->setStatus(CellStatus::selected);
+            lineCells.pushBack(cell);
+            if (checkFailRecursion(cell, NULL, m_cells, lineCells)) {
+                cell->setStatus(CellStatus::normal);
+                break;
+            }
+            // 失败 恢复数据
+            cell->setStatus(CellStatus::normal);
+            lineCells.eraseObject(cell);
+        }
+    }
+    
+    if (lineCells.size() > 0) {
+//        for (int i = 0; i < m_cells.size(); i++) {
+//            Cell * cell = m_cells.at(i);
+//            log("GameLayer::checkFailed m_cells   i = %d", i);
+//            cell->logInfo();
+//        }
+        for (int i = 0; i < lineCells.size(); i++) {
+            Cell * cell = lineCells.at(i);
+            log("GameLayer::checkFailed lineCells   i = %d", i);
+            cell->logInfo();
+        }
+    } else {
+        m_scene->gameOver();
+    }
+}
+
+bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells) {
+    bool res = false;
+    
+    for (int row = -1; row < 2; row++) {
+        for (int col = -1; col < 2; col++) {
+            if (!(0 == row && (col == -1 || col == 1)) && !(0 == col && (row == -1 || row == 1))) {
+                // 不是最后元素的正上下左右方
+                continue;
+            }
+            int index = getIndexByRowAndCol(currEndCell->getRow() + row, currEndCell->getCol() + col);
+            if (index >= 0) {
+                Cell * checkCell = cells.at(index);
+                if (checkCell != lastEndCell) { // 既不能回退
+                    if (selectCell(checkCell, selectCells)) {
+                        checkCell->setStatus(CellStatus::selected);
+                        selectCells.pushBack(checkCell);
+                        if (checkCell->getValue() == 0) {
+                            // 中间元素
+                            if (checkFailRecursion(checkCell, currEndCell, cells, selectCells)) {
+                                // 成功
+                                res = true;
+                            }
+                        } else {
+                            // 成功
+                            res = true;
+                        }
+                        checkCell->setStatus(CellStatus::normal);
+                        if (res) {
+                            break;
+                        } else {
+                            // 失败 恢复数据
+                            selectCells.eraseObject(checkCell);
+                        }
+                    }
+                }
+            }
+        }
+        if (res) {
+            break;
+        }
+    }
+    
+    return res;
 }

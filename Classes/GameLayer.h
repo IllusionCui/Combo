@@ -37,13 +37,23 @@ protected:
     void initCells();
     void startCells();
     int getIndexOfCellsByPos(Vec2 pos);
+    int getIndexByRowAndCol(int row, int col);
     
     void initUI();
     void updateUI();
     
-    void selectCell(Cell * cell);
+    /**
+     *  0 无效 1 添加元素 2 删除元素
+     */
+    int selectCell(Cell * cell, Vector<Cell *> &selectCells);
+    void userSelectCell(Cell * cell);
     void resetSelect();
     
+    void autoRecover(Cell * endCell);
+    void recoverByLine(Cell * endCell);
+    
+    void checkFailed();
+    bool checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells);
 private:
     CC_SYNTHESIZE(GameDate *, m_data, GameDate);
     
