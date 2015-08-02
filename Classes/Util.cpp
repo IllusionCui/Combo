@@ -22,3 +22,23 @@ void Util::fitToSize(Node * node, Size size, bool border) {
     float scaleY = size.height/node->getContentSize().height;
     node->setScale(border ? min(scaleX, scaleY) : max(scaleX, scaleY));
 }
+
+int Util::getIndexByWeight(vector<int> &weight) {
+    int count = 0;
+    for (int i = 0; i < weight.size(); i++) {
+        count += weight[i];
+    }
+    
+    int index = 0;
+    int random = rand()%count;
+    count = 0;
+    for (int i = 0; i < weight.size(); i++) {
+        if (random >= count && random < (count + weight[i])) {
+            index = i;
+            break;
+        }
+        count += weight[i];
+    }
+    
+    return index;
+}
