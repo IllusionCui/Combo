@@ -17,7 +17,10 @@ public:
     CREATE_FUNC(SingleScene);
     
     void onSetting(Ref* pSender);
-
+    
+    // 游戏
+    void startGame();
+    void gameOver();
 protected:
     SingleScene();
     ~SingleScene();
@@ -31,22 +34,18 @@ protected:
     bool hideWindow(CallFunc * finishCall);
     LayerColor * getMask();
     
+    void onStartAuto(Ref* pSender);
+    void onStartLine(Ref* pSender);
+    
     // 开始
     Node * createStart();
-    void onStart(Ref* pSender);
     
     // 设置
     Node * createSetting();
-    void onRestart(Ref* pSender);
     void onBack(Ref* pSender);
     
     // 结算
     Node * createEnd();
-    void onAgain(Ref* pSender);
-    
-    // 游戏
-    void startGame();
-    void gameOver();
 private:
     CC_SYNTHESIZE(Size, screenSize, ScreenSize);
     CC_SYNTHESIZE(Config *, m_config, Config);
