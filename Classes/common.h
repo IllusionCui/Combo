@@ -13,9 +13,20 @@
 
 const string defaultTTF = "fonts/default.ttf";
 
+enum class GameType {
+    autoRecover,   // 自动恢复
+    recoverByLine   // 旁消
+};
+
 typedef struct Config {
+    // 数据先关
     int rows;
     int cols;
+    GameType type;
+    vector<int> initWeights;
+    
+    
+    // 布局相关
     float gridLineWidthPercent;
     float cheerWidthPercent;
     float topHeightPercent;

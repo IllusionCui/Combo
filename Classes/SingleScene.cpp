@@ -51,8 +51,16 @@ void SingleScene::onEnter() {
 }
 
 void SingleScene::readConfig() {
+    // 游戏相关
     m_config->rows = 8;
     m_config->cols = 8;
+    m_config->type = GameType::recoverByLine;
+    m_config->initWeights.clear();
+    for (int i = 0; i < 5; i++) {
+        m_config->initWeights.push_back(1000*(5-i));
+    }
+    
+    // 布局相关
     m_config->gridLineWidthPercent = 0.02;
     m_config->cheerWidthPercent = 0.9;
     m_config->topHeightPercent = 0.15;
@@ -108,6 +116,18 @@ bool SingleScene::hideWindow(CallFunc * finishCall) {
     return true;
 }
 
+void SingleScene::onStartAuto(Ref* pSender) {
+    log("SingleScene::onStartAuto");
+    m_config->type = GameType::autoRecover;
+    hideWindow(CallFunc::create(CC_CALLBACK_0(SingleScene::startGame, this)));
+}
+
+void SingleScene::onStartLine(Ref* pSender) {
+    log("SingleScene::onStartLine");
+    m_config->type = GameType::recoverByLine;
+    hideWindow(CallFunc::create(CC_CALLBACK_0(SingleScene::startGame, this)));
+}
+
 // 开始
 Node * SingleScene::createStart() {
     Size size = screenSize;
@@ -119,16 +139,18 @@ Node * SingleScene::createStart() {
     res->addChild(mask);
     
     // 背景
-    LayerColor * bg = LayerColor::create(Color4B(120, 180, 20, 255), screenSize.width*4/5, screenSize.height*2/3);
+    LayerColor * bg = LayerColor::create(Color4B(255, 127,   0, 255), screenSize.width*4/5, screenSize.height*2/3);
     bg->ignoreAnchorPointForPosition(false);
     bg->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
     bg->setPosition(Vec2(size.width/2, size.height/2));
     res->addChild(bg);
     
     // 开始按钮
-    auto startItem = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStart, this));
-    startItem->setPosition(Vec2(size.width/2, size.height/3));
-    auto menu = Menu::create(startItem, NULL);
+    auto startItem1 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartAuto, this));
+    startItem1->setPosition(Vec2(size.width*3/5, size.height/2));
+    auto startItem2 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartLine, this));
+    startItem2->setPosition(Vec2(size.width*3/5, size.height/3));
+    auto menu = Menu::create(startItem1, startItem2, NULL);
     menu->setPosition(Vec2::ZERO);
     res->addChild(menu);
     
@@ -136,13 +158,15 @@ Node * SingleScene::createStart() {
     auto label = Label::createWithTTF("Start Game", defaultTTF, 90);
     label->setPosition(Vec2(size.width/2, size.height*2/3));
     res->addChild(label);
+    auto label1 = Label::createWithTTF("auto", defaultTTF, 60);
+    label1->setPosition(Vec2(size.width/3, size.height/2));
+    res->addChild(label1);
+    auto label2 = Label::createWithTTF("line", defaultTTF, 60);
+    label2->setPosition(Vec2(size.width/3, size.height/3));
+    res->addChild(label2);
+    
     
     return res;
-}
-
-void SingleScene::onStart(Ref* pSender) {
-    log("SingleScene::onStart");
-    hideWindow(CallFunc::create(CC_CALLBACK_0(SingleScene::startGame, this)));
 }
 
 // 设置
@@ -156,7 +180,7 @@ Node * SingleScene::createSetting() {
     res->addChild(mask);
     
     // 背景
-    LayerColor * bg = LayerColor::create(Color4B(120, 180, 20, 255), screenSize.width*4/5, screenSize.height*2/3);
+    LayerColor * bg = LayerColor::create(Color4B(255, 127,   0, 255), screenSize.width*4/5, screenSize.height*2/3);
     bg->ignoreAnchorPointForPosition(false);
     bg->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
     bg->setPosition(Vec2(size.width/2, size.height/2));
@@ -165,9 +189,11 @@ Node * SingleScene::createSetting() {
     // 关闭按钮
     auto closeItem = MenuItemImage::create("close.png", "", CC_CALLBACK_1(SingleScene::onBack, this));
     closeItem->setPosition(Vec2(size.width*3/4, size.height*3/4));
-    auto startItem = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onRestart, this));
-    startItem->setPosition(Vec2(size.width/2, size.height/3));
-    auto menu = Menu::create(closeItem, startItem, NULL);
+    auto startItem1 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartAuto, this));
+    startItem1->setPosition(Vec2(size.width*3/5, size.height/2));
+    auto startItem2 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartLine, this));
+    startItem2->setPosition(Vec2(size.width*3/5, size.height/3));
+    auto menu = Menu::create(closeItem, startItem1, startItem2, NULL);
     menu->setPosition(Vec2::ZERO);
     res->addChild(menu);
     
@@ -175,13 +201,14 @@ Node * SingleScene::createSetting() {
     auto label = Label::createWithTTF("Setting", defaultTTF, 90);
     label->setPosition(Vec2(size.width/2, size.height*2/3));
     res->addChild(label);
+    auto label1 = Label::createWithTTF("auto", defaultTTF, 60);
+    label1->setPosition(Vec2(size.width/3, size.height/2));
+    res->addChild(label1);
+    auto label2 = Label::createWithTTF("line", defaultTTF, 60);
+    label2->setPosition(Vec2(size.width/3, size.height/3));
+    res->addChild(label2);
     
     return res;
-}
-
-void SingleScene::onRestart(Ref* pSender) {
-    log("SingleScene::onRestart");
-    hideWindow(CallFunc::create(CC_CALLBACK_0(SingleScene::startGame, this)));
 }
 
 void SingleScene::onBack(Ref* pSender) {
@@ -200,18 +227,27 @@ Node * SingleScene::createEnd() {
     res->addChild(mask);
     
     // 背景
-    LayerColor * bg = LayerColor::create(Color4B(120, 180, 20, 255), screenSize.width*4/5, screenSize.height*2/3);
+    LayerColor * bg = LayerColor::create(Color4B(255, 127,   0, 255), screenSize.width*4/5, screenSize.height*2/3);
     bg->ignoreAnchorPointForPosition(false);
     bg->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
     bg->setPosition(Vec2(size.width/2, size.height/2));
     res->addChild(bg);
     
     // 开始按钮
-    auto startItem = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStart, this));
-    startItem->setPosition(Vec2(size.width/2, size.height/4));
-    auto menu = Menu::create(startItem, NULL);
+    auto startItem1 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartAuto, this));
+    startItem1->setPosition(Vec2(size.width*3/5, size.height*2/5));
+    auto startItem2 = MenuItemImage::create("start.png", "", CC_CALLBACK_1(SingleScene::onStartLine, this));
+    startItem2->setPosition(Vec2(size.width*3/5, size.height/4));
+    auto menu = Menu::create(startItem1, startItem2, NULL);
     menu->setPosition(Vec2::ZERO);
     res->addChild(menu);
+    
+    auto label1 = Label::createWithTTF("auto", defaultTTF, 60);
+    label1->setPosition(Vec2(size.width/3, size.height*2/5));
+    res->addChild(label1);
+    auto label2 = Label::createWithTTF("line", defaultTTF, 60);
+    label2->setPosition(Vec2(size.width/3, size.height/4));
+    res->addChild(label2);
     
     // 标题
     auto label = Label::createWithTTF("Game Over", defaultTTF, 90);
@@ -232,19 +268,14 @@ Node * SingleScene::createEnd() {
     // 连线
     if (date->newHighCombo) {
         auto comboNew = Sprite::create("new.png");
-        comboNew->setPosition(Vec2(size.width/3, size.height*2/5));
+        comboNew->setPosition(Vec2(size.width/3, size.height/2));
         res->addChild(comboNew);
     }
     auto combolabel = Label::createWithTTF(Util::strFormat("Score: %d", date->score), defaultTTF, 70);
-    combolabel->setPosition(Vec2(date->newHighCombo ? size.width*2/3 : size.width/2, size.height*2/5));
+    combolabel->setPosition(Vec2(date->newHighCombo ? size.width*2/3 : size.width/2, size.height/2));
     res->addChild(combolabel);
     
     return res;
-}
-
-void SingleScene::onAgain(Ref* pSender) {
-    log("SingleScene::onAgain");
-    hideWindow(CallFunc::create(CC_CALLBACK_0(SingleScene::startGame, this)));
 }
 
 // 游戏
