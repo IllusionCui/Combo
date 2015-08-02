@@ -50,6 +50,10 @@ bool Cell::init(int row, int col) {
     return true;
 }
 
+void Cell::logInfo() {
+    log("Cell::logInfo  this = %p, row = %d, col = %d, value = %d, status = %d", this, m_row, m_col, m_value, m_status);
+}
+
 void Cell::setContentSize(const Size& contentSize) {
     Node::setContentSize(contentSize);
     updateShow();
@@ -74,9 +78,14 @@ void Cell::setValue(int value) {
 
 void Cell::updateShow() {
     m_label->setString(Util::strFormat("%d", m_value));
+    if (m_value < 0) {
+        m_label->setColor(Color3B::GREEN);
+    } else if (m_value > 0) {
+        m_label->setColor(Color3B::RED);
+    } else {
+        m_label->setColor(Color3B::YELLOW);
+    }
     Size size = getContentSize();
-    Size labelSize = m_label->getContentSize();
-    float scale = MAX(MIN(size.width/labelSize.width, size.height/labelSize.height), 1);
-    m_label->setScale(scale);
+    Util::fitToSize(m_label, size, true);
     m_label->setPosition(Vec2(size.width/2, size.height/2));
 }

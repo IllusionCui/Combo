@@ -26,6 +26,8 @@ public:
     
     bool isSelectable();
     bool canBeMoveTo();
+    
+    void logInfo();
 protected:
     Cell();
     ~Cell();
