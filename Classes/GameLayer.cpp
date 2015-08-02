@@ -266,10 +266,13 @@ void GameLayer::selectCell(Cell * cell) {
     if (NULL == cell) {
         return;
     }
+    log("GameLayer::selectCell  cell = %p, row = %d, col = %d", cell, cell->getRow(), cell->getCol());
     
     long num = m_currSelectCells.size();
     bool add = true;
+    Cell * endCell = NULL;
     if (num > 0) {
+        endCell = m_currSelectCells.at(num - 1);
         long index = m_currSelectCells.getIndex(cell);
         if (index > -1) {
             if (index == num - 1) {
@@ -291,6 +294,13 @@ void GameLayer::selectCell(Cell * cell) {
             if (!cell->canBeMoveTo()) {
                 return; // 不能移动到
             }
+            int disRow = cell->getRow() - endCell->getRow();
+            int disCol = cell->getCol() - endCell->getCol();
+            if (!(0 == disRow && (disCol == -1 || disCol == 1)) && !(0 == disCol && (disRow == -1 || disRow == 1))) {
+                // 不是最后元素的正上下左右方
+                return;
+            }
+            
             int startValue = m_currSelectCells.at(0)->getValue();
             int selectValue = cell->getValue();
             if (selectValue != 0 && selectValue != startValue) {
@@ -302,9 +312,7 @@ void GameLayer::selectCell(Cell * cell) {
             }
         }
         
-        Cell * endCell = NULL;
         if (num > 0) {
-            endCell = m_currSelectCells.at(num - 1);
             if (num > 1 && endCell->getValue() != 0) {
                 // 当前已经合法不支持选择
                 return;
@@ -324,7 +332,7 @@ void GameLayer::selectCell(Cell * cell) {
         m_currSelectCells.pushBack(cell);
     } else {
         // 取消之前选择的Cell
-        cell->setStatus(CellStatus::normal);
+        endCell->setStatus(CellStatus::normal);
         m_currSelectCells.erase(m_currSelectCells.begin() + num - 1);
         
         if (num > 1) {
@@ -338,7 +346,11 @@ void GameLayer::selectCell(Cell * cell) {
 
 void GameLayer::resetSelect() {
     log("GameLayer::resetSelect");
+    for (int i = 0; i < m_currSelectCells.size(); i++) {
+        m_currSelectCells.at(i)->setStatus(CellStatus::normal);
+    }
     m_currSelectCells.clear();
+    
     for (int i = 0; i < m_currSelectLines.size(); i++) {
         m_currSelectLines.at(i)->removeFromParent();
     }
