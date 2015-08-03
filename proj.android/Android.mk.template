@@ -1,0 +1,166 @@
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := cocos2dcpp_shared
+
+LOCAL_MODULE_FILENAME := libcocos2dcpp
+
+	#../../Classes/TestBed.cpp \
+	#../../Classes/AppDelegate.cpp 
+
+LOCAL_SRC_FILES := hellocpp/main.cpp \
+	../../../cocos_common/external/crypto/CCCrypto.cpp \
+	../../../cocos_common/external/crypto/sha1/sha1.cpp \
+	../../../cocos_common/external/crypto/base64/libb64.c \
+	../../../cocos_common/external/crypto/md5/md5.c \
+	../../../cocos_common/external/libjson/_internal/Source/internalJSONNode.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONAllocator.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONChildren.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONDebug.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONIterators.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONMemory.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONNode.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONNode_Mutex.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONPreparse.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONStream.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONValidator.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONWorker.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/JSONWriter.cpp \
+	../../../cocos_common/external/libjson/_internal/Source/libjson.cpp \
+	../../../cocos_common/external/SuperAnim/SuperAnimCore.cpp \
+	../../../cocos_common/external/SuperAnim/SuperAnimNodeV2.cpp \
+	../../../cocos_common/lib/NativeUtil.cpp \
+	../../../cocos_common/lib/CLActions.cpp \
+	../../../cocos_common/lib/CLActionUtil.cpp \
+	../../../cocos_common/lib/CLAlignLayout.cpp \
+	../../../cocos_common/lib/CLAnimateSprite.cpp \
+	../../../cocos_common/lib/CLButton.cpp \
+	../../../cocos_common/lib/CLCache.cpp \
+	../../../cocos_common/lib/CLConfig.cpp \
+	../../../cocos_common/lib/CLCropNode.cpp \
+	../../../cocos_common/lib/CLDrawNode.cpp \
+	../../../cocos_common/lib/CLEvent.cpp \
+	../../../cocos_common/lib/CLFontUtil.cpp \
+	../../../cocos_common/lib/CLLang.cpp \
+	../../../cocos_common/lib/CLLayout.cpp \
+	../../../cocos_common/lib/CLLayoutItem.cpp \
+	../../../cocos_common/lib/CLMask.cpp \
+	../../../cocos_common/lib/CLMathUtil.cpp \
+	../../../cocos_common/lib/CLNetwork.cpp \
+	../../../cocos_common/lib/CLOfflineSender.cpp \
+	../../../cocos_common/lib/CLProgressBar.cpp \
+	../../../cocos_common/lib/CLSceneManager.cpp \
+	../../../cocos_common/lib/CLScrollView.cpp \
+	../../../cocos_common/lib/CLSecurity.cpp \
+	../../../cocos_common/lib/CLShaders.cpp \
+	../../../cocos_common/lib/CLSimpleBox.cpp \
+	../../../cocos_common/lib/CLSimpleMenu.cpp \
+	../../../cocos_common/lib/CLSnapCache.cpp \
+	../../../cocos_common/lib/CLSoundManager.cpp \
+	../../../cocos_common/lib/CLTime.cpp \
+	../../../cocos_common/lib/CLTip.cpp \
+	../../../cocos_common/lib/CLTouch.cpp \
+	../../../cocos_common/lib/CLTracker.cpp \
+	../../../cocos_common/lib/CLTrail.cpp \
+	../../../cocos_common/lib/CLUtil.cpp \
+	../../../cocos_common/lib/CLWindowManager.cpp \
+	../../../cocos_common/lib/CLZipUtil.cpp \
+	../../../cocos_common/lib/CLCrypto.cpp \
+	../../../cocos_common/lib/CLDownloadMgr.cpp \
+	../../../cocos_common/lib/CLTabController.cpp \
+	../../../cocos_common/lib/CLNetButton.cpp \
+	../../../cocos_common/lib/CLNetSprite.cpp \
+{src_files}
+	
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../cocos_common/lib
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../cocos_common/external/SuperAnim
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../cocos_common/external/libjson
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../cocos_common/external/crypto
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../cocos_common/external/crypto
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../cocos2d/extensions
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../cocos2d/cocos/base
+LOCAL_C_INCLUDES += {src_dirs}
+
+
+LOCAL_CPPFLAGS := -DJSON_ISO_STRICT
+ifdef NDK_DEBUG
+LOCAL_CPPFLAGS += -DJSON_DEBUG
+endif
+
+#LOCAL_LDLIBS += -pthread
+
+LOCAL_STATIC_LIBRARIES := cocos2dx_static
+LOCAL_STATIC_LIBRARIES += cocosdenshion_static
+
+LOCAL_STATIC_LIBRARIES += box2d_static
+# LOCAL_STATIC_LIBRARIES += cocosbuilder_static
+# LOCAL_STATIC_LIBRARIES += spine_static
+# LOCAL_STATIC_LIBRARIES += cocostudio_static
+LOCAL_STATIC_LIBRARIES += cocos_network_static
+LOCAL_STATIC_LIBRARIES += cocos_extension_static
+
+ifneq ($(APP_DEBUG),1)
+ifeq ($(TARGET_ARCH_ABI), x86) 
+$(info, Work around for x86 issue);
+# following options are copied from gcc -O2 options
+# refer https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
+LOCAL_CPPFLAGS += -O1
+LOCAL_CPPFLAGS += -fthread-jumps 
+LOCAL_CPPFLAGS += -falign-functions
+LOCAL_CPPFLAGS += -falign-jumps 
+LOCAL_CPPFLAGS += -falign-loops
+LOCAL_CPPFLAGS += -falign-labels 
+LOCAL_CPPFLAGS += -fcrossjumping 
+LOCAL_CPPFLAGS += -fcse-follow-jumps
+LOCAL_CPPFLAGS += -fcse-skip-blocks 
+LOCAL_CPPFLAGS += -fdelete-null-pointer-checks 
+LOCAL_CPPFLAGS += -fdevirtualize
+LOCAL_CPPFLAGS += -fdevirtualize-speculatively 
+LOCAL_CPPFLAGS += -fexpensive-optimizations 
+LOCAL_CPPFLAGS += -fgcse-lm  
+LOCAL_CPPFLAGS += -fhoist-adjacent-loads 
+LOCAL_CPPFLAGS += -finline-small-functions 
+LOCAL_CPPFLAGS += -findirect-inlining 
+LOCAL_CPPFLAGS += -fipa-cp 
+LOCAL_CPPFLAGS += -fipa-sra 
+LOCAL_CPPFLAGS += -fisolate-erroneous-paths-dereference 
+LOCAL_CPPFLAGS += -foptimize-sibling-calls 
+LOCAL_CPPFLAGS += -foptimize-strlen 
+LOCAL_CPPFLAGS += -fpartial-inlining 
+LOCAL_CPPFLAGS += -fpeephole2 
+LOCAL_CPPFLAGS += -freorder-blocks 
+LOCAL_CPPFLAGS += -freorder-blocks-and-partition 
+LOCAL_CPPFLAGS += -freorder-functions 
+LOCAL_CPPFLAGS += -frerun-cse-after-loop  
+LOCAL_CPPFLAGS += -fsched-interblock 
+LOCAL_CPPFLAGS += -fsched-spec 
+LOCAL_CPPFLAGS += -fschedule-insns 
+LOCAL_CPPFLAGS += -fschedule-insns2 
+LOCAL_CPPFLAGS += -fstrict-aliasing 
+LOCAL_CPPFLAGS += -fstrict-overflow 
+LOCAL_CPPFLAGS += -ftree-builtin-call-dce 
+LOCAL_CPPFLAGS += -ftree-switch-conversion 
+LOCAL_CPPFLAGS += -ftree-tail-merge 
+LOCAL_CPPFLAGS += -ftree-vrp 
+
+# following optimization options cause crash on atom 25xx cpu
+#LOCAL_CPPFLAGS += -ftree-pre 
+#LOCAL_CPPFLAGS += -fgcse
+#LOCAL_CPPFLAGS += -fcaller-saves 
+endif
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+
+$(call import-module,.)
+$(call import-module,audio/android)
+
+$(call import-module,Box2D)
+# $(call import-module,editor-support/cocosbuilder)
+# $(call import-module,editor-support/spine)
+# $(call import-module,editor-support/cocostudio)
+$(call import-module,network)
+$(call import-module,extensions)
+
+$(call import-add-path, $(LOCAL_PATH)/../../external)
