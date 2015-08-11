@@ -37,6 +37,7 @@ GameLayer::~GameLayer() {
     m_currSelectLines.clear();
     m_cells.clear();
     m_currSelectCells.clear();
+    m_hintCells.clear();
     CC_SAFE_FREE(m_data);
 }
 
@@ -287,7 +288,7 @@ void GameLayer::updateUI() {
 }
 
 void GameLayer::updateDebugInfo() {
-    m_debugInfoLabel->setString(Util::strFormat("init_count:%d,curr_count:%d", m_initCellCount, getValueCellCount()));
+    m_debugInfoLabel->setString(Util::strFormat("init_count:%d,curr_count:%d%\n%s", m_initCellCount, getValueCellCount(), getHintCellsInfo().c_str()));
 }
 
 int GameLayer::selectCell(Cell * cell, Vector<Cell *> &selectCells) {
@@ -464,36 +465,32 @@ void GameLayer::recoverByLine(Cell * endCell) {
 }
 
 void GameLayer::checkFailed() {
-    Vector<Cell *> lineCells;
+    log("GameLayer::checkFailed");
+    m_hintCells.clear();
     Vector<Cell *> unCheckCells;
     for (int i = 0; i < m_cells.size(); i++) {
         Cell * cell = m_cells.at(i);
-        if (selectCell(cell, lineCells)) {
+        if (selectCell(cell, m_hintCells)) {
             // 选中开始点
             cell->setStatus(CellStatus::selected);
-            lineCells.pushBack(cell);
-            if (checkFailRecursion(cell, NULL, m_cells, lineCells, unCheckCells)) {
+            m_hintCells.pushBack(cell);
+            if (checkFailRecursion(cell, NULL, m_cells, m_hintCells, unCheckCells)) {
                 cell->setStatus(CellStatus::normal);
                 break;
             }
             // 失败 恢复数据
             cell->setStatus(CellStatus::normal);
-            lineCells.eraseObject(cell);
+            m_hintCells.eraseObject(cell);
             unCheckCells.clear();
         }
     }
     
-    if (lineCells.size() > 0) {
-//        for (int i = 0; i < m_cells.size(); i++) {
-//            Cell * cell = m_cells.at(i);
-//            log("GameLayer::checkFailed m_cells   i = %d", i);
+    if (m_hintCells.size() > 0) {
+//        for (int i = 0; i < m_hintCells.size(); i++) {
+//            Cell * cell = m_hintCells.at(i);
+//            log("GameLayer::checkFailed lineCells   i = %d", i);
 //            cell->logInfo();
 //        }
-        for (int i = 0; i < lineCells.size(); i++) {
-            Cell * cell = lineCells.at(i);
-            log("GameLayer::checkFailed lineCells   i = %d", i);
-            cell->logInfo();
-        }
     } else {
         m_scene->gameOver();
     }
@@ -545,5 +542,22 @@ bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vecto
         }
     }
     
+    return res;
+}
+
+string GameLayer::getHintCellsInfo() {
+    string res = "";
+    for (int i = 0; i < m_hintCells.size(); i++) {
+        Cell * cell = m_hintCells.at(i);
+        if (0 == i) {
+            res = Util::strFormat("(%d,%d)", cell->getRow(), cell->getCol());
+        } else {
+            if (i % 5 == 0) {
+                res = Util::strFormat("%s->(%d,%d)%\n", res.c_str(), cell->getRow(), cell->getCol());
+            } else {
+                res = Util::strFormat("%s->(%d,%d)", res.c_str(), cell->getRow(), cell->getCol());
+            }
+        }
+    }
     return res;
 }

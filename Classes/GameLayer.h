@@ -56,6 +56,7 @@ protected:
     
     void checkFailed();
     bool checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells, Vector<Cell *> &unCheckCells);
+    string getHintCellsInfo();
 private:
     CC_SYNTHESIZE(GameDate *, m_data, GameDate);
     
@@ -66,10 +67,10 @@ private:
     Vector<Cell *> m_cells;
     Vector<Cell *> m_currSelectCells;
     Vector<DrawNode *> m_currSelectLines;
+    Vector<Cell *> m_hintCells;
     
     Label * m_scoreLabel;
     Label * m_comboLabel;
-    
     
     Label * m_debugInfoLabel;
     int m_initCellCount;
