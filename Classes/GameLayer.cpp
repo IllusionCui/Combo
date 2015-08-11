@@ -461,19 +461,21 @@ void GameLayer::recoverByLine(Cell * endCell) {
 
 void GameLayer::checkFailed() {
     Vector<Cell *> lineCells;
+    Vector<Cell *> unCheckCells;
     for (int i = 0; i < m_cells.size(); i++) {
         Cell * cell = m_cells.at(i);
         if (selectCell(cell, lineCells)) {
             // 选中开始点
             cell->setStatus(CellStatus::selected);
             lineCells.pushBack(cell);
-            if (checkFailRecursion(cell, NULL, m_cells, lineCells)) {
+            if (checkFailRecursion(cell, NULL, m_cells, lineCells, unCheckCells)) {
                 cell->setStatus(CellStatus::normal);
                 break;
             }
             // 失败 恢复数据
             cell->setStatus(CellStatus::normal);
             lineCells.eraseObject(cell);
+            unCheckCells.clear();
         }
     }
     
@@ -493,7 +495,7 @@ void GameLayer::checkFailed() {
     }
 }
 
-bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells) {
+bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells, Vector<Cell *> &unCheckCells) {
     bool res = false;
     
     for (int row = -1; row < 2; row++) {
@@ -506,12 +508,15 @@ bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vecto
             if (index >= 0) {
                 Cell * checkCell = cells.at(index);
                 if (checkCell != lastEndCell) { // 既不能回退
+                    if (unCheckCells.getIndex(checkCell) != -1) {
+                        continue;
+                    }
                     if (selectCell(checkCell, selectCells)) {
                         checkCell->setStatus(CellStatus::selected);
                         selectCells.pushBack(checkCell);
                         if (checkCell->getValue() == 0) {
                             // 中间元素
-                            if (checkFailRecursion(checkCell, currEndCell, cells, selectCells)) {
+                            if (checkFailRecursion(checkCell, currEndCell, cells, selectCells, unCheckCells)) {
                                 // 成功
                                 res = true;
                             }
@@ -525,6 +530,7 @@ bool GameLayer::checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vecto
                         } else {
                             // 失败 恢复数据
                             selectCells.eraseObject(checkCell);
+                            unCheckCells.pushBack(checkCell);
                         }
                     }
                 }

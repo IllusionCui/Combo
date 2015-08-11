@@ -55,7 +55,7 @@ protected:
     void recoverByLine(Cell * endCell);
     
     void checkFailed();
-    bool checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells);
+    bool checkFailRecursion(Cell * currEndCell, Cell * lastEndCell, Vector<Cell *> &cells, Vector<Cell *> &selectCells, Vector<Cell *> &unCheckCells);
 private:
     CC_SYNTHESIZE(GameDate *, m_data, GameDate);
     
