@@ -27,11 +27,13 @@ GameLayer::GameLayer() {
     m_gridSize = 0;
     m_scoreLabel = NULL;
     m_comboLabel = NULL;
+    m_debugInfoLabel = NULL;
 }
 
 GameLayer::~GameLayer() {
     CC_SAFE_RELEASE_NULL(m_scoreLabel);
     CC_SAFE_RELEASE_NULL(m_comboLabel);
+    CC_SAFE_RELEASE_NULL(m_debugInfoLabel);
     m_currSelectLines.clear();
     m_cells.clear();
     m_currSelectCells.clear();
@@ -118,6 +120,7 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
     resetSelect();
     
     checkFailed();
+    updateDebugInfo();
 }
 
 void GameLayer::initData() {
@@ -185,10 +188,17 @@ void GameLayer::initCells() {
 }
 
 void GameLayer::startCells() {
+    log("GameLayer::startCells");
     // 显示数据
+    m_initCellCount = 0;
     for (int i = 0; i < m_cells.size(); i++) {
-        m_cells.at(i)->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
+        int value = Util::getIndexByWeight(m_scene->getConfig()->initWeights);
+        m_cells.at(i)->setValue(value);
+        if (value > 0) {
+            m_initCellCount++;
+        }
     }
+    updateDebugInfo();
 }
 
 int GameLayer::getIndexOfCellsByPos(Vec2 pos) {
@@ -208,6 +218,19 @@ int GameLayer::getIndexByRowAndCol(int row, int col) {
     
     return res;
 }
+
+int GameLayer::getValueCellCount() {
+    int res = 0;
+    
+    for (int i = 0; i < m_cells.size(); i++) {
+        if (m_cells.at(i)->getValue() > 0) {
+            res++;
+        }
+    }
+
+    return res;
+}
+
 
 void GameLayer::initUI() {
     log("GameLayer::initUI");
@@ -245,11 +268,22 @@ void GameLayer::initUI() {
     auto menu = Menu::create(settingItem, NULL);
     menu->setPosition(Vec2::ZERO);
     addChild(menu, 1);
+    
+    //debug info
+    m_debugInfoLabel = Label::createWithTTF("0", defaultTTF, 30);
+    CC_SAFE_RETAIN(m_debugInfoLabel);
+    m_debugInfoLabel->setVerticalAlignment(TextVAlignment::CENTER);
+    m_debugInfoLabel->setPosition(Vec2(size.width/2, size.height/6));
+    addChild(m_debugInfoLabel, 1);
 }
 
 void GameLayer::updateUI() {
     m_scoreLabel->setString(Util::strFormat("%d", m_data->score));
     m_comboLabel->setString(Util::strFormat("%d", m_data->combo));
+}
+
+void GameLayer::updateDebugInfo() {
+    m_debugInfoLabel->setString(Util::strFormat("init_count:%d,curr_count:%d", m_initCellCount, getValueCellCount()));
 }
 
 int GameLayer::selectCell(Cell * cell, Vector<Cell *> &selectCells) {

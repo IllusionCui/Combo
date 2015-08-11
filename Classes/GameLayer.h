@@ -38,9 +38,11 @@ protected:
     void startCells();
     int getIndexOfCellsByPos(Vec2 pos);
     int getIndexByRowAndCol(int row, int col);
+    int getValueCellCount();
     
     void initUI();
     void updateUI();
+    void updateDebugInfo();
     
     /**
      *  0 无效 1 添加元素 2 删除元素
@@ -67,6 +69,10 @@ private:
     
     Label * m_scoreLabel;
     Label * m_comboLabel;
+    
+    
+    Label * m_debugInfoLabel;
+    int m_initCellCount;
 };
 
 #endif /* defined(__Combo__GameLayer__) */
