@@ -18,7 +18,7 @@ class Util {
 public:
     static string strFormat(const char *format, ...);
     static void fitToSize(Node * node, Size size, bool border);
-    static int getIndexByWeight(vector<int> &weight);
+    static int getIndexByWeight(vector<int> &weight, unsigned int weightIndex = 0);
 };
 
 #endif /* defined(__IGGameC__Util__) */
