@@ -97,6 +97,7 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
         userSelectCell(m_cells.at(index));
     }
 
+    bool succCombo = false;
     long num = m_currSelectCells.size();
     if (num > 1) {
         Cell * endCell = m_currSelectCells.at(num - 1);
@@ -115,11 +116,14 @@ void GameLayer::onTouchEnd(Touch* touch, Event* event) {
             m_data->score += endValue;
             m_data->combo++;
             updateUI();
+            succCombo = true;
         }
     }
     resetSelect();
     
-    checkFailed();
+    if (succCombo) {
+        checkFailed();
+    }
     updateDebugInfo();
 }
 
