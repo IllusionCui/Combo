@@ -416,7 +416,7 @@ void GameLayer::autoRecover(Cell * endCell) {
     
     // 新生成元素
     random_shuffle(cells.begin(), cells.end());
-    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
+    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights, 1));
 }
 
 void GameLayer::recoverByLine(Cell * endCell) {
@@ -456,7 +456,7 @@ void GameLayer::recoverByLine(Cell * endCell) {
     
     // 新生成元素
     random_shuffle(cells.begin(), cells.end());
-    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights));
+    cells[0]->setValue(Util::getIndexByWeight(m_scene->getConfig()->initWeights, 1));
 }
 
 void GameLayer::checkFailed() {
