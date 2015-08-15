@@ -271,7 +271,7 @@ Node * SingleScene::createEnd() {
         comboNew->setPosition(Vec2(size.width/3, size.height/2));
         res->addChild(comboNew);
     }
-    auto combolabel = Label::createWithTTF(Util::strFormat("Score: %d", date->score), defaultTTF, 70);
+    auto combolabel = Label::createWithTTF(Util::strFormat("Combo: %d", date->combo), defaultTTF, 70);
     combolabel->setPosition(Vec2(date->newHighCombo ? size.width*2/3 : size.width/2, size.height/2));
     res->addChild(combolabel);
     
