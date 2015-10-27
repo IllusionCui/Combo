@@ -152,10 +152,17 @@ void GameLayer::initBg() {
     log("GameLayer::initBg");
     
     Size size = m_scene->getScreenSize();
-    Sprite * bg = Sprite::create("bg.png");
-    Util::fitToSize(bg, size, false);
+    
+    LayerColor * bg = LayerColor::create(Color4B::GRAY, size.width, size.height);
+    bg->ignoreAnchorPointForPosition(false);
+    bg->setAnchorPoint(Vec2::ANCHOR_MIDDLE);
     bg->setPosition(Vec2(size.width/2, size.height/2));
     addChild(bg, -1);
+    
+//    Sprite * bg = Sprite::create("bg.png");
+//    Util::fitToSize(bg, size, false);
+//    bg->setPosition(Vec2(size.width/2, size.height/2));
+//    addChild(bg, -1);
     
     Config * conf = m_scene->getConfig();
     float gridEndX = m_gridStartPos.x + conf->cols*m_gridSize;

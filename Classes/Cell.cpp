@@ -79,9 +79,9 @@ void Cell::setValue(int value) {
 void Cell::updateShow() {
     m_label->setString(Util::strFormat("%d", m_value));
     if (m_value < 0) {
-        m_label->setColor(Color3B::GREEN);
-    } else if (m_value > 0) {
         m_label->setColor(Color3B::RED);
+    } else if (m_value > 0) {
+        m_label->setColor(Color3B::GREEN);
     } else {
         m_label->setColor(Color3B::YELLOW);
     }
